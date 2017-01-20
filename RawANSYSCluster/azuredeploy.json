@@ -202,8 +202,7 @@
 			}]
 		},
 		"dependsOn": [
-			"[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-			"[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+			"[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
 		]
 	}, {
 		"type": "Microsoft.Compute/virtualMachines",
@@ -314,7 +313,7 @@
 								"name": "[variables('ipConfigName')]",
 								"properties": {
 									"subnet": {
-										"id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+										"id": "[variables('subnetRef')]"
 									}
 								}
 							}]
@@ -324,8 +323,7 @@
 			}
 		},
 		"dependsOn": [
-			"storageLoop",
-			"[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+			"storageLoop"
 		]
 	}]
 }
