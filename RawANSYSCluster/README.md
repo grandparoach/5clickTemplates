@@ -1,3 +1,4 @@
+
 # Simple Cluster with ANSYS installed
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fgrandparoach%2F5clickTemplates%2Fmaster%2FRawANSYSCluster%2Fazuredeploy.json" target="_blank">
@@ -7,6 +8,8 @@
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 <br></br>
+This Template has been modified to use an existing Virtual Network
+
 <b>Quickstart</b>
 
 	1) Deploy ARM Template
