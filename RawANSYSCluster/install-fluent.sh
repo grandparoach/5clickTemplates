@@ -11,7 +11,7 @@ mkdir /mnt/resource/scratch/INSTALLERS
 mkdir /mnt/resource/scratch/INSTALLERS/ANSYS
 
 wget -q http://azbenchmarkstorage.blob.core.windows.net/ansysbenchmarkstorage/$DOWN -O /mnt/resource/scratch/benchmark/$DOWN
-wget -q https://raw.githubusercontent.com/tanewill/5clickTemplates/master/RawANSYSCluster/runme.jou -O /mnt/resource/scratch/benchmark/runme.jou
+wget -q https://raw.githubusercontent.com/grandparoach/5clickTemplates/master/RawANSYSCluster/runme.jou -O /mnt/resource/scratch/benchmark/runme.jou
 wget -q http://azbenchmarkstorage.blob.core.windows.net/ansysbenchmarkstorage/ANSYS.tgz -O /mnt/resource/scratch/ANSYS.tgz
 tar -xzf /mnt/resource/scratch/ANSYS.tgz -C /mnt/resource/scratch/INSTALLERS
 tar -xvf /mnt/resource/scratch/benchmark/$DOWN -C /mnt/resource/scratch/benchmark
