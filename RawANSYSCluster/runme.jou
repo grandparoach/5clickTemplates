@@ -1,0 +1,6 @@
+f r-c-d benchmark.cas.gz
+par lat
+par band
+s iterate 100
+parallel timer usage
+exit y
