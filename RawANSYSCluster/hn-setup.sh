@@ -29,6 +29,40 @@ rpm -ivh epel-release-7-9.noarch.rpm
 yum install -y -q nfs-utils sshpass nmap htop
 yum groupinstall -y "X Window System"
 
+# Partitions all data disks attached to the VM and creates
+# a RAID-0 volume with them.
+#
+
+    mountPoint=/mnt/nfsshare
+    createdPartitions=""
+
+    # Loop through and partition disks until not found
+    for disk in sdc sdd sde sdf sdg sdh sdi sdj sdk sdl sdm sdn sdo sdp sdq sdr; do
+        fdisk -l /dev/$disk || break
+        fdisk /dev/$disk << EOF
+n
+p
+1
+
+
+t
+fd
+w
+EOF
+        createdPartitions="$createdPartitions /dev/${disk}1"
+    done
+
+    # Create RAID-0 volume
+    if [ -n "$createdPartitions" ]; then
+        devices=`echo $createdPartitions | wc -w`
+        mdadm --create /dev/md10 --level 0 --raid-devices $devices $createdPartitions
+        mkfs -t ext4 /dev/md10
+        echo "/dev/md10 $mountPoint ext4 defaults,nofail 0 2" >> /etc/fstab
+        mount /dev/md10
+    fi
+
+
+
 echo "/mnt/nfsshare $localip.*(rw,sync,no_root_squash,no_all_squash)" | tee -a /etc/exports
 echo "/mnt/resource/scratch $localip.*(rw,sync,no_root_squash,no_all_squash)" | tee -a /etc/exports
 chmod -R 777 /mnt/nfsshare/
