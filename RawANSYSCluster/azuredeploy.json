@@ -2,21 +2,6 @@
 	"$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
-		"resourceLocation": {
-			"allowedValues": [
-				"East US",
-				"West US",
-				"South Central US",
-				"North Central US",
-				"North Europe",
-				"West Europe",
-				"Japan East"
-			],
-			"type": "String",
-			"metadata": {
-				"description": "Azure region where all resources will be deployed. This is distinct from resource group location."
-			}
-		},
 		"virtualNetworkName": {
            "type": "string",
            "metadata": {
@@ -35,17 +20,28 @@
               "description": "This is the name of the subnet to use for the NFS server."
            }
         },
-
+        "jumpboxSku": {
+			"defaultValue": "Standard_DS4_v2",
+			"allowedValues": [
+				"Standard_DS4_v2",
+				"Standard_DS13_v2",
+				"Standard_DS14_v2"				
+			],
+			"type": "String",
+			"metadata": {
+				"description": "Size of the Jump Box?"
+			}
+		},
         "vmSku": {
-			"defaultValue": "Standard_A4",
+			"defaultValue": "Standard_H16R",
 			"allowedValues": [
 				"Standard_A4",
 				"Standard_A8",
 				"Standard_A9",
 				"Standard_A10",
 				"Standard_A11",
-				"Standard_H16r",
-				"Standard_H16mr"				
+				"Standard_H16R",
+				"Standard_H16MR"				
 			],
 			"type": "String",
 			"metadata": {
@@ -98,8 +94,16 @@
 			"metadata": {
 				"description": "Which benchark model would you like to download"
 			}
-		}
+		},
+        "dataDiskSize": {
+      "type": "int",
+      "defaultValue": 128,
+      "metadata": {
+        "description": "The size in GB of each data disk that is attached to the VM.  A RAID-0 volume is created with all data disks that is dataDiskSize * dataDiskCount in size."
+      }
+    }
 	},
+
 	"variables": {
 		"namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
 		"longNamingInfix": "[toLower(parameters('vmssName'))]",
@@ -155,15 +159,15 @@
 		"type": "Microsoft.Storage/storageAccounts",
 		"name": "[variables('jumpBoxSAName')]",
 		"apiVersion": "[variables('storageApiVersion')]",
-		"location": "[parameters('resourceLocation')]",
+		"location": "[resourceGroup().location]",
 		"properties": {
-			"accountType": "[variables('storageAccountType')]"
+			"accountType": "Premium_LRS"
 		}
 	}, {
 		"type": "Microsoft.Storage/storageAccounts",
 		"name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
 		"apiVersion": "[variables('storageApiVersion')]",
-		"location": "[parameters('resourceLocation')]",
+		"location": "[resourceGroup().location]",
 		"copy": {
 			"name": "storageLoop",
 			"count": "[variables('saCount')]"
@@ -175,7 +179,7 @@
 		"type": "Microsoft.Network/publicIPAddresses",
 		"name": "[variables('publicIPAddressName')]",
 		"apiVersion": "[variables('networkApiVersion')]",
-		"location": "[parameters('resourceLocation')]",
+		"location": "[resourceGroup().location]",
 		"properties": {
 			"publicIPAllocationMethod": "Dynamic",
 			"dnsSettings": {
@@ -186,7 +190,7 @@
 		"type": "Microsoft.Network/networkInterfaces",
 		"name": "[variables('jumpBoxNicName')]",
 		"apiVersion": "[variables('networkApiVersion')]",
-		"location": "[parameters('resourceLocation')]",
+		"location": "[resourceGroup().location]",
 		"properties": {
 			"ipConfigurations": [{
 				"name": "[variables('jumpBoxIPConfigName')]",
@@ -208,10 +212,10 @@
 		"type": "Microsoft.Compute/virtualMachines",
 		"name": "[variables('jumpBoxName')]",
 		"apiVersion": "[variables('computeApiVersion')]",
-		"location": "[parameters('resourceLocation')]",
+		"location": "[resourceGroup().location]",
 		"properties": {
 			"hardwareProfile": {
-				"vmSize": "[parameters('vmSku')]"
+				"vmSize": "[parameters('jumpboxSku')]"
 			},
 			"osProfile": {
 				"computerName": "[variables('jumpBoxName')]",
@@ -227,25 +231,181 @@
 					},
 					"caching": "ReadWrite",
 					"createOption": "FromImage"
-				}
-			},
+				},
+          "dataDisks": [ 
+            { 
+            "name": "datadisk0", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 0, 
+            "vhd": { 
+              "uri": "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk0.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk1", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 1, 
+            "vhd": { 
+              "uri": "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk1.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk2", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 2, 
+            "vhd": { 
+              "uri": "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk2.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk3", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 3, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk3.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk4", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 4, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk4.vhd')]" 
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk5", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 5, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk5.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk6", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 6, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk6.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk7", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 7, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk7.vhd')]" 
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk8", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 8, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk8.vhd')]" 
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk9", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 9, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk9.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk10", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 10, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk10.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk11", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 11, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk11.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk12", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 12, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk12.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk13", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 13, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk13.vhd')]" 
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk14", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 14, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk14.vhd')]" 
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }, 
+            { 
+            "name": "datadisk15", 
+            "diskSizeGB": "[parameters('dataDiskSize')]", 
+            "lun": 15, 
+            "vhd": { 
+              "Uri":  "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/datadisk15.vhd')]"
+              }, 
+            "caching": "ReadWrite", 
+            "createOption": "Empty" 
+            }
+          ]
+        },
 			"networkProfile": {
 				"networkInterfaces": [{
 					"id": "[resourceId('Microsoft.Network/networkInterfaces',variables('jumpBoxNicName'))]"
 				}]
-			},
-			"diagnosticsProfile": {
-				"bootDiagnostics": {
-					"enabled": "true",
-					"storageUri": "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net')]"
-				}
 			}
 		},
 		"resources": [{
 			"type": "extensions",
 			"name": "masterExtension",
 			"apiVersion": "[variables('storageApiVersion')]",
-			"location": "[parameters('resourceLocation')]",
+			"location": "[resourceGroup().location]",
 			"tags": {
 				"displayName": "masterExtension"
 			},
@@ -277,7 +437,7 @@
 		},
 		"name": "[variables('namingInfix')]",
 		"apiVersion": "[variables('computeApiVersion')]",
-		"location": "[parameters('resourceLocation')]",
+		"location": "[resourceGroup().location]",
 		"properties": {
 			"overprovision": "true",
 			"upgradePolicy": {
