@@ -8,7 +8,7 @@
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 <br></br>
-This Template has been modified to use an existing Virtual Network
+This Template has been modified to use an existing Virtual Network.  It has also been modified to attach Premium disks to the NFS Server 
 
 <b>Quickstart</b>
 
