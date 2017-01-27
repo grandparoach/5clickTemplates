@@ -22,6 +22,12 @@ echo "$IPPRE:/mnt/resource/scratch    /mnt/resource/scratch   nfs defaults 0 0" 
 showmount -e 10.0.0.4
 mount -a
 
+# Don't require password for HPC user sudo
+echo "$USER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    
+# Disable tty requirement for sudo
+sed -i 's/^Defaults[ ]*requiretty/# Defaults requiretty/g' /etc/sudoers
+
 ln -s /opt/intel/impi/5.1.3.181/intel64/bin/ /opt/intel/impi/5.1.3.181/bin
 ln -s /opt/intel/impi/5.1.3.181/lib64/ /opt/intel/impi/5.1.3.181/lib
 chown -R $USER:$USER /mnt/resource/
